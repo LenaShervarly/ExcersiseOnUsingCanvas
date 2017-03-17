@@ -19,6 +19,11 @@ public class Board extends View {
 
     private final GestureDetector mDetector;
     private BoardHandler hanlder;
+    private GameState gameState;
+
+    public void setGame(GameState gameState) {
+        this.gameState = gameState;
+    }
 
     public Board(Context context) {
         super(context);
@@ -53,23 +58,33 @@ public class Board extends View {
         Paint white = new Paint();
         white.setARGB(255, 255, 255, 255);
         Resources res = getResources();
-        Drawable draw = res.getDrawable(R.drawable.kth);
+        Drawable logo = res.getDrawable(R.drawable.kth);
 
         for (int j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++) {
                 Paint currentColor = ((i+j) % 2 == 0) ? black : white;
                 canvas.drawRect(i * widthCell, j*hightCell, widthCell + i * widthCell, hightCell + j* hightCell, currentColor);
 
-                if(currentColor.equals(black)) {
-                    draw.setBounds(i * widthCell, j * hightCell, widthCell + i * widthCell, hightCell + j * hightCell);
-                    draw.draw(canvas);
+                if(gameState.obstacles[i][j]) {
+                    logo.setBounds(i * widthCell, j * hightCell, widthCell + i * widthCell, hightCell + j * hightCell);
+                    logo.draw(canvas);
                 }
             }
         }
+        Drawable player = res.getDrawable(R.drawable.player);
+        player.setBounds(widthCell, hightCell, widthCell+widthCell, hightCell +hightCell);
+        player.draw(canvas);
+
+
     }
 
     public interface BoardHandler {
         void onClick(int cellX, int cellY);
+
+        void onRigh();
+        void onLeft();
+        void onUp();
+        void onDown();
     }
 
     public void setHandler(BoardHandler hanlder){
@@ -87,8 +102,24 @@ public class Board extends View {
                 int cellX = (int)event.getX() / (width/8);
                 int cellY = (int)event.getY() / (height/8);
 
-                if(!hanlder.equals(null))
-                    hanlder.onClick(cellX, cellY);
+                if(!hanlder.equals(null)) {
+                    int dx = cellX - gameState.playerX;
+                    int dy = cellY - gameState.targetY;
+                    int angle = (int) Math.atan(dy/dx);
+
+                    /*switch (angle) {
+                        case 45 :
+                    }*/
+                    if(cellX > gameState.playerX && cellY == gameState.playerY)
+                        hanlder.onRigh();
+                    if(cellX < gameState.playerX && cellY == gameState.playerY)
+                        hanlder.onLeft();
+                    if(cellX == gameState.playerX && cellY > gameState.playerY)
+                        hanlder.onUp();
+                    if(cellX == gameState.playerX && cellY < gameState.playerY)
+                        hanlder.onDown();
+                }
+
                 res = true;
             }
         }
